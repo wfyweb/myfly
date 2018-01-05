@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" onselectstart="return false">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        *{
+            margin:0;
+            padding: 0;
+        }
+        body{
+            background:#ccc;
+        }
+        #box{
+            width:570px;
+            height: 600px;
+            border:10px solid #fff;
+            margin: 20px auto;
+            position: relative
+        }
+        
+        #level{
+            position: absolute;
+            left: 0;
+            top:0;
+            width:100%;
+            height:100%;
+            z-index:1;
+        }
+        #level.hide{
+            display: none;
+        }
+        #level h1{
+            text-align: center;
+            color: #999;
+            padding-top: 60px;
+            padding-bottom: 130px;
+            font-size: 40px;
+            line-height: 60px;  
+        }
+        #level p{
+            width: 200px;
+            height: 38px;
+            background: #666;
+            color: #fff;
+            line-height: 35px;
+            font-size: 24px;
+            text-align: center;
+            margin: 30px auto;
+            cursor: pointer;
+        }
+        #level p:hover{
+                background: pink;
+                color: #222;
+        }
+        #map{
+            position: absolute;
+            left: 0;
+            top:0;
+            width:100%;
+            height:100%;
+        }
+        
+        #map img{
+            position: absolute;
+        }
+        
+    </style>
+</head>
+<body>
+    <div id="box">
+        <div id="level">
+            <h1>飞机大战v1.0</h1>
+            <p>简单</p>
+            <p>中等</p>
+            <p>困难</p>
+            <p style="color:aqua">WM附体</p>
+        </div>
+        <div id="map">
+
+        </div>
+    </div>
+    <script>
+        //全局变量
+        var oBox = document.getElementById('box');
+        var oLevel = document.getElementById('level');
+        var oMap = document.getElementById('map');
+        var oBoxoffsetLeft = oBox.offsetLeft;
+        var oBoxoffsetTop = oBox.offsetTop;
+        // 开始选项
+        ext();
+        //初始选择难度界面的点击事件
+        function ext(){
+            var oP = oLevel.getElementsByTagName('p');
+            for(var i=0,len=oP.length;i<len;i++){
+                (function(i){
+                    oP[i].onclick = function(e){
+                        e = e || window.e;
+                        startGame(i,{
+                            x:e.clientX - oBoxoffsetLeft,
+                            y:e.clientY - oBoxoffsetTop
+                        });
+                        
+                    }
+                })(i)
+            }
+        }
+        // 开始游戏
+        function startGame(level,pos){
+            clearMap()
+            plane(level,pos)
+        }
+
+        // 隐藏清理
+        function clearMap(){
+            oLevel.className = 'hide' 
+        }
+        // 我方飞机
+        function plane(level,pos){
+            var oImg = new Image();
+            oImg.src = "https://ss3.bdstatic.com/70cFv8Sh_Q1YnxGkpoWK1HF6hhy/it/u=4249968693,3203046370&fm=27&gp=0.jpg"
+            oImg.width = 70;
+            oImg.height = 70;
+            oImg.style.left = pos.x-oImg.width/2+'px';
+            oImg.style.top = pos.y-oImg.height/2 +'px';
+            oMap.appendChild(oImg);
+
+            //边界值
+            var leftMin = -oImg.width/2,
+                leftMax = oMap.clientWidth-oImg.width/2,
+                topMin = 0,
+                topMax = oMap.clientHeight-oImg.height;
+            
+            document.onmousemove = function(e){
+                e = e || window.e;
+                var top = e.clientY-oBoxoffsetTop-oImg.height/2;
+                var left = e.clientX-oBoxoffsetLeft-oImg.width/2;
+
+                top = Math.max(topMin,top);
+                top = Math.min(topMax,top);
+                left = Math.max(leftMin,left);
+                left = Math.min(leftMax,left);
+
+                oImg.style.left = left+'px';
+                oImg.style.top = top +'px';
+
+            }
+        }
+    </script>
+</body>
+</html>
