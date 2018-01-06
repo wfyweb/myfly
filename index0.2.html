@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en" onselectstart="return false">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        *{margin:0;padding:0;}
+        #box{
+            width:512px;
+            height:768px;
+            margin:20px auto;
+            position: relative;
+            background:url('img/bg_1.jpg');
+        }
+        #level.hide{
+            display:none;
+        }
+        #level{
+            position: absolute;
+            top:0;
+            left:0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        #level h1{
+            text-align: center;
+            font-size: 40px;
+            line-height:60px;
+            padding-top:60px;
+            padding-bottom:150px;
+            color:#fff;
+        }
+        #level p{
+            text-align: center;
+            width: 200px;
+            height: 35px;
+            color:#000;
+            font-weight:bold;
+            line-height: 35px;
+            margin: 30px auto;
+            background:#fff;
+            cursor: pointer;
+        }
+        #map{
+            position:absolute;
+            left:0;
+            top:0;
+            width: 100%;
+            height: 100%;
+        }
+        #map .plane{
+            position: absolute;
+        }
+        #map .biu{
+            position: absolute;
+        }
+    </style>
+</head>
+<body>
+    <div id="box">
+        <div id="level">
+            <h1>打飞机v0.1</h1>
+            <p>简单</p>
+            <p>中等</p>
+            <p>困难</p>
+            <p style="color:red;">WM附体</p>
+        </div>
+        <div id="map">
+
+        </div>
+    </div>
+    <script>
+        window.requestAnimationFrame = window.requestAnimationFrame || function (fn) {return setTimeout(fn,1000/60)};
+        window.cancelAnimationFrame = window.cancelAnimationFrame || clearTimeout;
+
+        //全局变量
+        var aBox = document.getElementById('box');
+        var aLevel = document.getElementById('level');
+        var aMap = document.getElementById('map');
+        var aBoxoffsetTop = aBox.offsetTop;
+        var aBoxoffsetLeft = aBox.offsetLeft;
+
+        //启动
+        exe();
+
+        //初始化选择难度
+        function exe(){
+            var oP = aLevel.getElementsByTagName('p');
+            for(var i=0,len = oP.length;i<len;i++){
+                (function(i){
+                    oP[i].onclick = function(e){
+                        e = e || window.e;
+
+                        startGame(i,{
+                            x : e.clientX-aBox.offsetLeft,
+                            y : e.clientY-aBox.offsetTop
+                        });
+                    }
+                })(i)
+            }
+        }
+
+        //开始游戏、
+        function startGame(level,porps){
+            cleartMap();
+            plane(level,porps);
+        }
+        // 隐藏和清理
+        function cleartMap(){
+            aLevel.className = 'hide';
+        }
+
+        //创建我军
+        function plane(level,porps){
+            var oImg = new Image(); // document.createElement('img')
+            oImg.width = 70;
+            oImg.height = 70;
+            oImg.src= 'img/plane_1.png';
+            oImg.className = 'plane';
+            oImg.style.left = porps.x - oImg.width/2+'px';
+            oImg.style.top = porps.y - oImg.height/2+ 'px';
+            aMap.appendChild(oImg)
+
+            //边界值
+            var topMin = 0,
+                topMax = aMap.clientHeight - oImg.height,
+                leftMin = -oImg.width/2,
+                leftMax = aMap.clientWidth - oImg.width/2;
+
+            // 我军移动鼠标跟随
+            document.onmousemove = function(e){
+                e = e || window.e;
+
+                var left = e.clientX-aBoxoffsetLeft-oImg.width/2;
+                var top = e.clientY-aBoxoffsetTop-oImg.height/2;
+
+                //限制区域
+                left = Math.max(left,leftMin);
+                left = Math.min(left,leftMax);
+                top = Math.max(top,topMin);
+                top = Math.min(top,topMax);
+
+                // if(left<=leftMin){
+                //     left = leftMin
+                // }else if(left>=leftMax){
+                //     left = leftMax
+                // }else if(top<=topMin){
+                //     top = topMin
+                // }else if(top>=topMax){
+                //     top = topMax
+                // }
+
+                oImg.style.left = left+'px';
+                oImg.style.top = top+ 'px';
+            }
+            //调用子弹
+            fire(level,oImg)
+        }
+
+        //创建子弹
+        function fire(level,oImg){
+            setInterval(function(){
+                var oBiu = new Image();
+                oBiu.src = 'img/fire.png';
+                oBiu.width = 30;
+                oBiu.height = 30;
+                oBiu.className = 'biu';
+                oBiu.style.left = oImg.offsetLeft+oImg.width/2-oBiu.width/2+'px';
+                oBiu.style.top = oImg.offsetTop-oBiu.height+5+'px';
+                aMap.appendChild(oBiu)
+                //子弹运动
+                function m(){
+                    var top = oBiu.offsetTop - 35;
+
+                    if(top<-oBiu.height){
+                        top = -oBiu.height
+                        aMap.removeChild(oBiu)
+                    }else{
+                        oBiu.style.top = top + 'px';
+                        requestAnimationFrame(m);
+                    }
+
+                }
+                //将运动执行队列放后面，不然子弹会直接初始就在 top-50 的位置
+                setTimeout(function(){
+                    requestAnimationFrame(m);
+                },50);
+            },[100,200,200,20][level])
+        }
+    </script>
+</body>
+</html>
