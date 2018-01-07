@@ -172,7 +172,6 @@
                 //子弹运动
                 function m(){
                     var top = oBiu.offsetTop - 35;
-
                     if(top<-oBiu.height){
                         top = -oBiu.height
                         aMap.removeChild(oBiu)
@@ -180,7 +179,6 @@
                         oBiu.style.top = top + 'px';
                         requestAnimationFrame(m);
                     }
-
                 }
                 //将运动执行队列放后面，不然子弹会直接初始就在 top-50 的位置
                 setTimeout(function(){
