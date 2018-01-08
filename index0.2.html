@@ -49,10 +49,7 @@
             width: 100%;
             height: 100%;
         }
-        #map .plane{
-            position: absolute;
-        }
-        #map .biu{
+        #map .plane,#map .biu,#map .enemy{
             position: absolute;
         }
     </style>
@@ -156,6 +153,8 @@
             }
             //调用子弹
             fire(level,oImg)
+            //调用敌军
+            enemy(level,oImg)
         }
 
         //创建子弹
@@ -186,6 +185,38 @@
                 },50);
             },[100,200,200,20][level])
         }
+
+        //创建敌军
+        function enemy(level,oImg){
+            var mapW = aMap.offsetWidth,
+                mapH = aMap.offsetHeight; 
+            //var spped = 
+            setInterval(function(){
+                //生成敌军
+                var oEnemy = new Image();
+                oEnemy.src = 'img/enemy_small.png';
+                oEnemy.width = '25';
+                oEnemy.height = '20';
+                oEnemy.className = 'enemy';
+                oEnemy.style.left = Math.random()*mapW-oEnemy.width/2+'px';
+                oEnemy.style.top = -oEnemy.height+'px';
+                aMap.appendChild(oEnemy);
+                //敌军运动
+                function m(){
+                    var top = oEnemy.offsetTop + 5;
+                    if(top>=mapH){
+                        //top = -oEnemy.height
+                        aMap.removeChild(oEnemy)
+                    }else{
+                       oEnemy.style.top = top + 'px';
+                        requestAnimationFrame(m);
+                    }
+                }
+                 requestAnimationFrame(m);
+
+            },[500,250,200,50][level])
+        }
     </script>
 </body>
 </html>
++
