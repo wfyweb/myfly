@@ -49,9 +49,28 @@
             width: 100%;
             height: 100%;
         }
-        #map .plane,#map .biu,#map .enemy{
+        #map .plane,#map .biu,#map .enemy,#map .boom{
             position: absolute;
         }
+        #map .plane{
+            z-index: 8;
+        }
+        #map .biu{
+            z-index: 10;
+        }
+        #map .enemy{
+            z-index: 9;
+        }
+        #map .boom{
+                z-index: 7;
+                animation: fade .8s 1;
+                animation-fill-mode: forwards;
+            }
+        @keyframes fade {
+            from{ opacity: 1; }
+            to{ opacity: 0; }
+        }
+
     </style>
 </head>
 <body>
@@ -64,7 +83,7 @@
             <p style="color:red;">WM附体</p>
         </div>
         <div id="map">
-
+            <div id="enemyAll"></div>
         </div>
     </div>
     <script>
@@ -75,6 +94,8 @@
         var aBox = document.getElementById('box');
         var aLevel = document.getElementById('level');
         var aMap = document.getElementById('map');
+        var aEnemyAll = document.getElementById('enemyAll');
+        var allEnemy = aEnemyAll.children;
         var aBoxoffsetTop = aBox.offsetTop;
         var aBoxoffsetLeft = aBox.offsetLeft;
 
@@ -176,6 +197,18 @@
                         aMap.removeChild(oBiu)
                     }else{
                         oBiu.style.top = top + 'px';
+                        //console.log('35')
+                        // 子弹碰撞检测
+                        for(var i=0,len=allEnemy.length;i<len;i++){
+                            var objI = allEnemy[i];
+                            if (coll(oBiu,objI)){
+                                boom(objI.offsetLeft,objI.offsetTop)//生成爆炸图
+                                aMap.removeChild(oBiu);//移除子弹
+                                
+                                aEnemyAll.removeChild(allEnemy[i]);//移除敌军 
+                                return;
+                            }
+                        }
                         requestAnimationFrame(m);
                     }
                 }
@@ -187,34 +220,66 @@
         }
 
         //创建敌军
-        function enemy(level,oImg){
+        function enemy(level){
             var mapW = aMap.offsetWidth,
                 mapH = aMap.offsetHeight; 
-            //var spped = 
+            var spped = [5,6,8,10][level]
             setInterval(function(){
                 //生成敌军
                 var oEnemy = new Image();
                 oEnemy.src = 'img/enemy_small.png';
-                oEnemy.width = '30';
-                oEnemy.height = '30';
+                oEnemy.width = '54';
+                oEnemy.height = '40';
                 oEnemy.className = 'enemy';
                 oEnemy.style.left = Math.random()*mapW-oEnemy.width/2+'px';
                 oEnemy.style.top = -oEnemy.height+'px';
-                aMap.appendChild(oEnemy);
+                aEnemyAll.appendChild(oEnemy);
                 //敌军运动
                 function m(){
-                    var top = oEnemy.offsetTop + 5;
-                    if(top>=mapH){
-                        //top = -oEnemy.height
-                        aMap.removeChild(oEnemy)
-                    }else{
-                       oEnemy.style.top = top + 'px';
-                        requestAnimationFrame(m);
-                    }
+                   if(oEnemy.parentNode){
+                        var top = oEnemy.offsetTop;
+                        top+= spped;
+                        if(top>=mapH){
+                            //top = -oEnemy.height
+                            aEnemyAll.removeChild(oEnemy)
+                        }else{
+                            oEnemy.style.top = top + 'px';
+                            requestAnimationFrame(m);
+                        }
+                   }
                 }
                  requestAnimationFrame(m);
 
             },[500,250,200,50][level])
+        }
+        //碰撞检测
+        function coll(obj1,obj2){ 
+
+            var T1 = obj1.offsetTop,
+                B1 = T1+obj1.clientHeight,
+                L1 = obj1.offsetLeft,
+                R1 = L1+obj1.clientWidth;
+                
+            var T2 = obj2.offsetTop,
+                L2 = obj2.offsetLeft,
+                B2 = T2+obj2.clientHeight,
+                R2 = L2+obj2.clientWidth;
+               
+            return !(B1<T2 || R1<L2 || T1>B2 || L1>R2)
+        }
+        //创建boom
+        function boom(l,t){
+            var oBoom = new Image();
+                oBoom.width = 54;
+                oBoom.height = 40;
+                oBoom.className = 'boom';
+                oBoom.src="img/boom_small.png";
+                oBoom.style.left = l+'px';
+                oBoom.style.top = t+'px';
+                aMap.appendChild(oBoom);
+                setTimeout(function(){
+                    aMap.removeChild(oBoom);
+                },1000)
         }
     </script>
 </body>
