@@ -70,6 +70,21 @@
             from{ opacity: 1; }
             to{ opacity: 0; }
         }
+        #map .boom2{
+            position: absolute;
+            z-index:11;
+            animation:bling 2s 1 forwards;
+            
+        }
+        @keyframes bling{
+            0%{opacity: 1;}
+            20%{opacity: 0;}
+            40%{opacity: 1;}
+            60%{opacity: 0;}
+            80%{opacity: 1;}
+           100%{opacity: 0;}
+        }
+       
 
     </style>
 </head>
@@ -83,7 +98,7 @@
             <p style="color:red;">WM附体</p>
         </div>
         <div id="map">
-            <div id="enemyAll"></div>
+            <div id="biuAll"></div>
         </div>
     </div>
     <script>
@@ -94,8 +109,8 @@
         var aBox = document.getElementById('box');
         var aLevel = document.getElementById('level');
         var aMap = document.getElementById('map');
-        var aEnemyAll = document.getElementById('enemyAll');
-        var allEnemy = aEnemyAll.children;
+        var oBiuAll = document.getElementById('biuAll');
+        var allBiu = oBiuAll.children;//动态获取子弹
         var aBoxoffsetTop = aBox.offsetTop;
         var aBoxoffsetLeft = aBox.offsetLeft;
 
@@ -122,7 +137,8 @@
         //开始游戏、
         function startGame(level,porps){
             cleartMap();
-            plane(level,porps);
+            var p = plane(level,porps);//调用我军
+            enemy(level,p)//调用敌军
         }
         // 隐藏和清理
         function cleartMap(){
@@ -172,15 +188,14 @@
                 oImg.style.left = left+'px';
                 oImg.style.top = top+ 'px';
             }
-            //调用子弹
-            fire(level,oImg)
-            //调用敌军
-            enemy(level,oImg)
+           
+            fire(level,oImg) //调用子弹
+            return oImg;
         }
 
         //创建子弹
         function fire(level,oImg){
-            setInterval(function(){
+            aBox.biuInterval=setInterval(function(){
                 var oBiu = new Image();
                 oBiu.src = 'img/fire.png';
                 oBiu.width = 30;
@@ -188,29 +203,20 @@
                 oBiu.className = 'biu';
                 oBiu.style.left = oImg.offsetLeft+oImg.width/2-oBiu.width/2+'px';
                 oBiu.style.top = oImg.offsetTop-oBiu.height+5+'px';
-                aMap.appendChild(oBiu)
+                oBiuAll.appendChild(oBiu)
                 //子弹运动
                 function m(){
-                    var top = oBiu.offsetTop - 35;
-                    if(top<-oBiu.height){
-                        top = -oBiu.height
-                        aMap.removeChild(oBiu)
-                    }else{
-                        oBiu.style.top = top + 'px';
-                        //console.log('35')
-                        // 子弹碰撞检测
-                        for(var i=0,len=allEnemy.length;i<len;i++){
-                            var objI = allEnemy[i];
-                            if (coll(oBiu,objI)){
-                                boom(objI.offsetLeft,objI.offsetTop)//生成爆炸图
-                                aMap.removeChild(oBiu);//移除子弹
-                                
-                                aEnemyAll.removeChild(allEnemy[i]);//移除敌军 
-                                return;
-                            }
+                    if(oBiu.parentNode){
+                        var top = oBiu.offsetTop - 35;
+                        if(top<-oBiu.height){
+                            top = -oBiu.height
+                            oBiuAll.removeChild(oBiu)
+                        }else{
+                            oBiu.style.top = top + 'px';
+                            requestAnimationFrame(m);
                         }
-                        requestAnimationFrame(m);
                     }
+                    
                 }
                 //将运动执行队列放后面，不然子弹会直接初始就在 top-50 的位置
                 setTimeout(function(){
@@ -220,11 +226,11 @@
         }
 
         //创建敌军
-        function enemy(level){
+        function enemy(level,oPlane){
             var mapW = aMap.offsetWidth,
                 mapH = aMap.offsetHeight; 
             var spped = [5,6,8,10][level]
-            setInterval(function(){
+            aBox.enemyInterval=setInterval(function(){
                 //生成敌军
                 var oEnemy = new Image();
                 oEnemy.src = 'img/enemy_small.png';
@@ -233,7 +239,7 @@
                 oEnemy.className = 'enemy';
                 oEnemy.style.left = Math.random()*mapW-oEnemy.width/2+'px';
                 oEnemy.style.top = -oEnemy.height+'px';
-                aEnemyAll.appendChild(oEnemy);
+                aMap.appendChild(oEnemy);
                 //敌军运动
                 function m(){
                    if(oEnemy.parentNode){
@@ -241,9 +247,29 @@
                         top+= spped;
                         if(top>=mapH){
                             //top = -oEnemy.height
-                            aEnemyAll.removeChild(oEnemy)
+                            aMap.removeChild(oEnemy)
                         }else{
                             oEnemy.style.top = top + 'px';
+                            // 子弹碰撞检测
+                            for(var i=allBiu.length-1;i>=0;i--){
+                                var objI = allBiu[i];
+                                if (coll(objI,oEnemy)){
+                                    boom(objI.offsetLeft,objI.offsetTop,0)//生成爆炸图
+                                    oBiuAll.removeChild(objI);//移除子弹
+                                    aMap.removeChild(oEnemy);//移除敌军 
+                                    return;
+                                }
+                            }
+                            // 我军碰撞检测
+                            if(coll(oPlane,oEnemy)){
+                                boom(oEnemy.offsetLeft,oEnemy.offsetTop,0)//生成敌军爆炸图
+                                boom(oPlane.offsetLeft,oPlane.offsetTop,1)//生成我军爆炸图
+                                oBiuAll.removeChild(objI);//移除子弹
+                                aMap.removeChild(oEnemy);//移除敌军 
+                                aMap.removeChild(oPlane);//移除我军 
+                                GameOver();
+                                return;
+                            }
                             requestAnimationFrame(m);
                         }
                    }
@@ -267,20 +293,27 @@
                
             return !(B1<T2 || R1<L2 || T1>B2 || L1>R2)
         }
-        //创建boom
-        function boom(l,t){
+        //爆炸函数
+        function boom(l,t,i){
             var oBoom = new Image();
-                oBoom.width = 54;
-                oBoom.height = 40;
-                oBoom.className = 'boom';
-                oBoom.src="img/boom_small.png";
+                oBoom.width = ['54','70'][i];
+                oBoom.height = ['40','70'][i];
+                oBoom.className = ['boom','boom2'][i];
+                oBoom.src="img/"+["boom_small","plane_1"][i]+".png";
                 oBoom.style.left = l+'px';
                 oBoom.style.top = t+'px';
                 aMap.appendChild(oBoom);
                 setTimeout(function(){
                     aMap.removeChild(oBoom);
-                },1000)
+                },[1000,2500][i])
+        }
+        //游戏结束
+        function GameOver(){
+            document.onmousemove = null;
+            clearInterval(aBox.biuInterval);
+            clearInterval(aBox.enemyInterval);
         }
     </script>
 </body>
 </html>
+<!--敌军函数开启碰撞检测-->
