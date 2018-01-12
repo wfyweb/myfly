@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en" onselectstart="return false">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+        *{margin:0;padding:0;}
+        #box{
+            width:512px;
+            height:768px;
+            margin:20px auto;
+            position: relative;
+            background:url('img/bg_1.jpg');
+        }
+        #level.hide{
+            display:none;
+        }
+        #level{
+            position: absolute;
+            top:0;
+            left:0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        #level h1{
+            text-align: center;
+            font-size: 40px;
+            line-height:60px;
+            padding-top:60px;
+            padding-bottom:150px;
+            color:#fff;
+        }
+        #level p{
+            text-align: center;
+            width: 200px;
+            height: 35px;
+            color:#000;
+            font-weight:bold;
+            line-height: 35px;
+            margin: 30px auto;
+            background:#fff;
+            cursor: pointer;
+        }
+        #map{
+            position:absolute;
+            left:0;
+            top:0;
+            width: 100%;
+            height: 100%;
+        }
+        #map .plane,#map .biu,#map .enemy,#map .boom{
+            position: absolute;
+        }
+        #map .plane{
+            z-index: 8;
+        }
+        #map .biu{
+            z-index: 10;
+        }
+        #map .enemy{
+            z-index: 9;
+        }
+        #map .boom{
+                z-index: 7;
+                animation: fade .8s 1;
+                animation-fill-mode: forwards;
+            }
+        @keyframes fade {
+            from{ opacity: 1; }
+            to{ opacity: 0; }
+        }
+        #map .boom2{
+            position: absolute;
+            z-index:11;
+            animation:bling 2s 1 forwards;
+            
+        }
+        @keyframes bling{
+            0%{opacity: 1;}
+            20%{opacity: 0;}
+            40%{opacity: 1;}
+            60%{opacity: 0;}
+            80%{opacity: 1;}
+           100%{opacity: 0;}
+        }
+       
+
+    </style>
+</head>
+<body>
+    <div id="box">
+        <div id="level">
+            <h1>打飞机v0.1</h1>
+            <p>简单</p>
+            <p>中等</p>
+            <p>困难</p>
+            <p style="color:red;">WM附体</p>
+        </div>
+        <div id="map">
+            <div id="biuAll"></div>
+        </div>
+    </div>
+    <script>
+        window.requestAnimationFrame = window.requestAnimationFrame || function (fn) {return setTimeout(fn,1000/60)};
+        window.cancelAnimationFrame = window.cancelAnimationFrame || clearTimeout;
+
+        //全局变量
+        var aBox = document.getElementById('box');
+        var aLevel = document.getElementById('level');
+        var aMap = document.getElementById('map');
+        var oBiuAll = document.getElementById('biuAll');
+        var allBiu = oBiuAll.children;//动态获取子弹
+        var aBoxoffsetTop = aBox.offsetTop;
+        var aBoxoffsetLeft = aBox.offsetLeft;
+
+        //启动
+        exe();
+
+        //初始化选择难度
+        function exe(){
+            var oP = aLevel.getElementsByTagName('p');
+            for(var i=0,len = oP.length;i<len;i++){
+                (function(i){
+                    oP[i].onclick = function(e){
+                        e = e || window.e;
+
+                        startGame(i,{
+                            x : e.clientX-aBox.offsetLeft,
+                            y : e.clientY-aBox.offsetTop
+                        });
+                    }
+                })(i)
+            }
+        }
+
+        //开始游戏、
+        function startGame(level,porps){
+            cleartMap();
+            var p = plane(level,porps);//调用我军
+            enemy(level,p)//调用敌军
+        }
+        // 隐藏和清理
+        function cleartMap(){
+            aLevel.className = 'hide';
+        }
+
+        //创建我军
+        function plane(level,porps){
+            var oImg = new Image(); // document.createElement('img')
+            oImg.width = 70;
+            oImg.height = 70;
+            oImg.src= 'img/plane_1.png';
+            oImg.className = 'plane';
+            oImg.style.left = porps.x - oImg.width/2+'px';
+            oImg.style.top = porps.y - oImg.height/2+ 'px';
+            aMap.appendChild(oImg)
+
+            //边界值
+            var topMin = 0,
+                topMax = aMap.clientHeight - oImg.height,
+                leftMin = -oImg.width/2,
+                leftMax = aMap.clientWidth - oImg.width/2;
+
+            // 我军移动鼠标跟随
+            document.onmousemove = function(e){
+                e = e || window.e;
+
+                var left = e.clientX-aBoxoffsetLeft-oImg.width/2;
+                var top = e.clientY-aBoxoffsetTop-oImg.height/2;
+
+                //限制区域
+                left = Math.max(left,leftMin);
+                left = Math.min(left,leftMax);
+                top = Math.max(top,topMin);
+                top = Math.min(top,topMax);
+
+                // if(left<=leftMin){
+                //     left = leftMin
+                // }else if(left>=leftMax){
+                //     left = leftMax
+                // }else if(top<=topMin){
+                //     top = topMin
+                // }else if(top>=topMax){
+                //     top = topMax
+                // }
+
+                oImg.style.left = left+'px';
+                oImg.style.top = top+ 'px';
+            }
+           
+            fire(level,oImg) //调用子弹
+            return oImg;
+        }
+
+        //创建子弹
+        function fire(level,oImg){
+            aBox.biuInterval=setInterval(function(){
+                var oBiu = new Image();
+                oBiu.src = 'img/fire.png';
+                oBiu.width = 30;
+                oBiu.height = 30;
+                oBiu.className = 'biu';
+                oBiu.style.left = oImg.offsetLeft+oImg.width/2-oBiu.width/2+'px';
+                oBiu.style.top = oImg.offsetTop-oBiu.height+5+'px';
+                oBiuAll.appendChild(oBiu)
+                //子弹运动
+                function m(){
+                    if(oBiu.parentNode){
+                        var top = oBiu.offsetTop - 35;
+                        if(top<-oBiu.height){
+                            top = -oBiu.height
+                            oBiuAll.removeChild(oBiu)
+                        }else{
+                            oBiu.style.top = top + 'px';
+                            requestAnimationFrame(m);
+                        }
+                    }
+                    
+                }
+                //将运动执行队列放后面，不然子弹会直接初始就在 top-50 的位置
+                setTimeout(function(){
+                    requestAnimationFrame(m);
+                },50);
+            },[100,200,200,20][level])
+        }
+
+        //创建敌军
+        function enemy(level,oPlane){
+            var mapW = aMap.offsetWidth,
+                mapH = aMap.offsetHeight; 
+            var speed = [5,6,8,10][level];
+            
+            var num = 1;
+            
+            aBox.enemyInterval=setInterval(function(){
+                 var index = num%30?1:0; //隔30个小飞机添加大飞机
+                //生成敌军
+                var oEnemy = new Image();
+                oEnemy.src = 'img/enemy_'+["big","small"][index]+'.png';
+                oEnemy.width = ['70','54'][index];
+                oEnemy.height = ['70','40'][index];
+                oEnemy.HP = [20,1][index];
+                oEnemy.speed = speed+(Math.random()*0.6-0.3)*speed; //每架飞机的速度上下浮动30%
+                oEnemy.speed *= index?1:0.5;   //oEnemy.speed = index?oEnemy.speed*1:oEnemy.speed*0.5;
+                oEnemy.className = 'enemy';
+                oEnemy.style.left = Math.random()*mapW-oEnemy.width/2+'px';
+                oEnemy.style.top = -oEnemy.height+'px';
+                aMap.appendChild(oEnemy);
+                num++;
+                //敌军运动
+                function m(){
+                   if(oEnemy.parentNode){
+                        var top = oEnemy.offsetTop;
+                        top+= oEnemy.speed;
+                        if(top>=mapH){
+                            //top = -oEnemy.height
+                            aMap.removeChild(oEnemy)
+                        }else{
+                            oEnemy.style.top = top + 'px';
+                            // 子弹与敌军碰撞检测
+                            for(var i=allBiu.length-1;i>=0;i--){
+                                var objI = allBiu[i];
+                                if (coll(objI,oEnemy)){
+                                    oBiuAll.removeChild(objI);//移除子弹
+                                    oEnemy.HP--;
+                                    if( !oEnemy.HP ){
+                                       boom(oEnemy.offsetLeft,oEnemy.offsetTop,oEnemy.width,oEnemy.height,index?0:2)//生成爆炸图                            
+                                        aMap.removeChild(oEnemy);//移除敌军 
+                                        return;
+                                    }
+                                }
+                            }
+                            // 我军与敌军碰撞检测
+                            if( oPlane.parentNode && coll(oEnemy,oPlane)){
+                                boom(oEnemy.offsetLeft,oEnemy.offsetTop,oEnemy.width,oEnemy.height,index?0:2)//生成敌军爆炸图
+                                boom(oPlane.offsetLeft,oPlane.offsetTop,oPlane.width,oPlane.height,1)//生成我军爆炸图
+                                aMap.removeChild(oEnemy);//移除敌军 
+                                aMap.removeChild(oPlane);//移除我军 
+                                GameOver();
+                                return;
+                            }
+                            requestAnimationFrame(m);
+                        }
+                   }
+                }
+                 requestAnimationFrame(m);
+            },[500,250,200,100][level])
+        }
+        //碰撞检测
+        function coll(obj1,obj2){ 
+
+            var T1 = obj1.offsetTop,
+                B1 = T1+obj1.clientHeight,
+                L1 = obj1.offsetLeft,
+                R1 = L1+obj1.clientWidth;
+                
+            var T2 = obj2.offsetTop,
+                L2 = obj2.offsetLeft,
+                B2 = T2+obj2.clientHeight,
+                R2 = L2+obj2.clientWidth;
+               
+            return !(B1<T2 || R1<L2 || T1>B2 || L1>R2)
+        }
+        //爆炸函数
+        function boom(l,t,w,h,i){
+            console.log(l,t,w,h,i)
+            var oBoom = new Image();
+                oBoom.width = w;
+                oBoom.height = h;
+                oBoom.className = ['boom','boom2','boom'][i];
+                oBoom.src="img/"+["boom_small","plane_1","boom_big"][i]+".png";
+                oBoom.style.left = l+'px';
+                oBoom.style.top = t+'px';
+                aMap.appendChild(oBoom);
+                setTimeout(function(){
+                   oBoom.parentNode && aMap.removeChild(oBoom);
+                },[1000,2500,1000][i])
+        }
+        //游戏结束
+        function GameOver(){
+            document.onmousemove = null;
+            clearInterval(aBox.biuInterval);
+            clearInterval(aBox.enemyInterval);
+        }
+    </script>
+</body>
+</html>
+<!--隔30个小飞机添加大飞机-->
+<!--小飞机的速度上下浮动30% 大飞机速度是一半-->
+<!--大飞机血量是20 小飞机血量1-->
+<!--打飞机大爆炸图，小飞机小爆炸图-->
