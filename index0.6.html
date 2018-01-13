@@ -98,7 +98,6 @@
             cursor: pointer;
              z-index:10;
         }
-
     </style>
 </head>
 <body>
@@ -118,7 +117,6 @@
     <script>
         window.requestAnimationFrame = window.requestAnimationFrame || function (fn) {return setTimeout(fn,1000/60)};
         window.cancelAnimationFrame = window.cancelAnimationFrame || clearTimeout;
-
         //全局变量
         var aBox = document.getElementById('box');
         var aLevel = document.getElementById('level');
@@ -131,7 +129,6 @@
         var foo = true;
         //启动
         exe();
-
         //初始化选择难度
         function exe(){
             var oP = aLevel.getElementsByTagName('p');
@@ -139,7 +136,6 @@
                 (function(i){
                     oP[i].onclick = function(e){
                         e = e || window.e;
-
                         startGame(i,{
                             x : e.clientX-aBox.offsetLeft,
                             y : e.clientY-aBox.offsetTop
@@ -148,7 +144,6 @@
                 })(i)
             }
         }
-
         //开始游戏、
         function startGame(level,porps){
             cleartMap();
@@ -194,7 +189,6 @@
         //         }
         //     } 
         // }
-
         //创建我军
         function plane(level,porps){
             var oImg = new Image(); // document.createElement('img')
@@ -209,20 +203,17 @@
             }
            
             aMap.appendChild(oImg)
-
             //边界值
             var topMin = 0,
                 topMax = aMap.clientHeight - oImg.height,
                 leftMin = -oImg.width/2,
                 leftMax = aMap.clientWidth - oImg.width/2;
-
             // 我军移动鼠标跟随
             
                 document.onmousemove = function(e){
                     e = e || window.e;
                     var left = e.clientX-aBoxoffsetLeft-oImg.width/2;
                     var top = e.clientY-aBoxoffsetTop-oImg.height/2;
-
                     //限制区域
                     left = Math.max(left,leftMin);
                     left = Math.min(left,leftMax);
@@ -239,7 +230,6 @@
                    return oImg; 
         }
             
-
         //创建子弹
         function fire(level,oImg){
                 //console.log("zi 1:",foo)
@@ -275,7 +265,6 @@
                 }
                 
         }
-
         //创建敌军
         function enemy(level,oPlane){
             var mapW = aMap.offsetWidth,
@@ -344,7 +333,6 @@
         
         //碰撞检测
         function coll(obj1,obj2){ 
-
             var T1 = obj1.offsetTop,
                 B1 = T1+obj1.clientHeight,
                 L1 = obj1.offsetLeft,
@@ -381,4 +369,8 @@
     </script>
 </body>
 </html>
-<!--添加 暂停功能 带完成-->
+<!--添加 暂停功能 待完成
+
+    原因： 再次激活，无法 继续下落
+            无法调用 m() 继续运动
+-->
